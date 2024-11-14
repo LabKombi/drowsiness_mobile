@@ -3,10 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 // Color Style
 Color primary = const Color(0xff6699CC);
-LinearGradient background = LinearGradient(
+LinearGradient background = const LinearGradient(
   colors: [
-    const Color(0xff66CCFF),
-    const Color(0xff0099FF),
+    Color(0xff66CCFF),
+    Color(0xff0099FF),
   ],
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
