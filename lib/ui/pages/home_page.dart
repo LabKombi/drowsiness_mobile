@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:drowsiness_mobile/shared/theme.dart';
 
+import 'camera_preview_page.dart';
+
 class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -15,7 +17,7 @@ class HomePage extends StatelessWidget {
           children: [
             // Teks di tengah halaman
             Text(
-              'Welcome to the Home Page!',
+              'Sistem Deteksi Tidak Aktif',
               style: blackTextStyle.copyWith(fontSize: 20, fontWeight: medium),
             ),
             SizedBox(height: 30),
@@ -30,7 +32,7 @@ class HomePage extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
               child: Text(
-                'Button 1',
+                'Sistem: OFF',
                 style: whiteTextStyle.copyWith(fontWeight: medium),
               ),
             ),
@@ -40,14 +42,17 @@ class HomePage extends StatelessWidget {
             // Tombol kedua
             ElevatedButton(
               onPressed: () {
-                // Aksi tombol kedua
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CameraPreviewPage()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: buttonActiveColor,
                 padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
               child: Text(
-                'Button 2',
+                'Preview Camera',
                 style: whiteTextStyle.copyWith(fontWeight: medium),
               ),
             ),
