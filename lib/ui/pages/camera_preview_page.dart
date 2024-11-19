@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:drowsiness_mobile/shared/theme.dart';
 import 'package:http/http.dart' as http;
 
 class CameraPreviewPage extends StatefulWidget {
@@ -9,26 +8,30 @@ class CameraPreviewPage extends StatefulWidget {
 }
 
 class _CameraPreviewPageState extends State<CameraPreviewPage> {
-  String imageUrl = 'https://example.com/image'; // URL gambar dari API
-  bool isOffline = false; // Indikator jika API offline
+  String baseImageUrl = 'http://192.168.179.164/photo.jpg';
+  String imageUrl = '';
+  bool isOffline = false;
+  Timer? _timer;
 
-  // Fungsi untuk mendapatkan gambar dari API
   Future<void> fetchImage() async {
     try {
-      final response = await http.get(Uri.parse(imageUrl));
+      final newUrl =
+          '$baseImageUrl?timestamp=${DateTime.now().millisecondsSinceEpoch}';
+      final response = await http.get(Uri.parse(newUrl));
+
       if (response.statusCode == 200) {
         setState(() {
-          isOffline = false; // Gambar berhasil diambil
-          imageUrl = 'https://example.com/image?timestamp=${DateTime.now().millisecondsSinceEpoch}';
+          isOffline = false;
+          imageUrl = newUrl;
         });
       } else {
         setState(() {
-          isOffline = true; // API offline
+          isOffline = true;
         });
       }
     } catch (e) {
       setState(() {
-        isOffline = true; // Terjadi kesalahan, anggap offline
+        isOffline = true;
       });
     }
   }
@@ -37,8 +40,13 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
   void initState() {
     super.initState();
     fetchImage();
-    // Memperbarui gambar setiap 1 detik
-    Timer.periodic(Duration(seconds: 1), (timer) => fetchImage());
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) => fetchImage());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -47,13 +55,11 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Camera Preview', style: whiteTextStyle),
-        backgroundColor: primary,
+        title: Text('Camera Preview'),
+        backgroundColor: Colors.blue,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context); // Kembali ke halaman sebelumnya
-          },
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Center(
@@ -68,14 +74,15 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
               ? Center(
             child: Text(
               'Sistem Sedang Offline',
-              style: greyTextStyle.copyWith(fontSize: 18, fontWeight: medium),
+              style: TextStyle(color: Colors.grey, fontSize: 18),
               textAlign: TextAlign.center,
             ),
           )
               : ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             child: Image.network(
               imageUrl,
+              key: ValueKey(imageUrl), // Tambahkan Key unik
               fit: BoxFit.cover,
               width: deviceWidth,
               height: deviceWidth,
@@ -83,7 +90,7 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
                 return Center(
                   child: Text(
                     'Sistem Sedang Offline',
-                    style: greyTextStyle.copyWith(fontSize: 18, fontWeight: medium),
+                    style: TextStyle(color: Colors.grey, fontSize: 18),
                     textAlign: TextAlign.center,
                   ),
                 );
