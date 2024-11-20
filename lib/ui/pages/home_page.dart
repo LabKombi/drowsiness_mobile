@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:drowsiness_mobile/shared/theme.dart';
 
+import 'camera_page.dart';
 import 'camera_preview_page.dart';
 
 class HomePage extends StatelessWidget {
@@ -44,7 +45,7 @@ class HomePage extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => CameraPreviewPage()),
+                  MaterialPageRoute(builder: (context) => CameraPage()),
                 );
               },
               style: ElevatedButton.styleFrom(
