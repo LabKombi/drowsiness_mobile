@@ -1,5 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:drowsiness_mobile/shared/config.dart';
 
 class CameraPage extends StatefulWidget {
   const CameraPage({Key? key}) : super(key: key);
@@ -9,20 +13,17 @@ class CameraPage extends StatefulWidget {
 }
 
 class _CameraPageState extends State<CameraPage> {
-  final String baseUrl = "https://i.pinimg.com/1200x/fb/8f/db/fb8fdbff65307bbe14e5e5876363e91a.jpg"; // Ganti dengan URL API Anda
-  String imageUrl = "";
+  final String feedUrl = "https://io.adafruit.com/api/v2/${Config.username}/feeds?x-aio-key=${Config.feedKey}"; // Ganti dengan URL yang sesuai
+  Image? image;
   Timer? timer;
 
   @override
   void initState() {
     super.initState();
-    // Atur URL awal
-    imageUrl = _generateImageUrl();
-    // Jalankan timer untuk memperbarui URL setiap 1 detik
+    // Panggil fetchImage saat pertama kali dan secara periodik
+    fetchImage();
     timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
-      setState(() {
-        imageUrl = _generateImageUrl();
-      });
+      fetchImage();
     });
   }
 
@@ -32,9 +33,40 @@ class _CameraPageState extends State<CameraPage> {
     super.dispose();
   }
 
-  String _generateImageUrl() {
-    // Tambahkan query parameter acak agar cache tidak digunakan
-    return "$baseUrl?timestamp=${DateTime.now().millisecondsSinceEpoch}";
+  Future<void> fetchImage() async {
+    try {
+      final response = await http.get(Uri.parse(feedUrl));
+
+      if (response.statusCode == 200) {
+        // Parsing response JSON
+        List<dynamic> feeds = json.decode(response.body);
+
+        // Mencari feed dengan id tertentu
+        var targetFeed = feeds.firstWhere(
+              (feed) => feed['id'] == 2940873, // Ganti dengan ID feed yang diinginkan
+          orElse: () => null,
+        );
+
+        if (targetFeed != null && targetFeed['last_value'] != null) {
+          // Mendapatkan last_value yang berisi gambar dalam Base64
+          String base64Image = targetFeed['last_value'];
+
+          // Decode Base64 menjadi bytes
+          Uint8List bytes = base64Decode(base64Image);
+
+          // Update state untuk menampilkan gambar
+          setState(() {
+            image = Image.memory(bytes);
+          });
+        } else {
+          print("Feed tidak ditemukan atau last_value kosong");
+        }
+      } else {
+        print('Failed to load feed data: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching image: $e');
+    }
   }
 
   @override
@@ -43,11 +75,12 @@ class _CameraPageState extends State<CameraPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Image Stream"),
+        title: const Text("Camera Preview"),
       ),
       body: Center(
-        child: imageUrl.isNotEmpty
-            ? Container(
+        child: image == null
+            ? const CircularProgressIndicator()
+            : Container(
           width: deviceWidth,
           height: deviceWidth,
           decoration: BoxDecoration(
@@ -56,28 +89,9 @@ class _CameraPageState extends State<CameraPage> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              imageUrl,
-              key: ValueKey(imageUrl), // Memastikan widget diperbarui
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return const Center(
-                  child: Text(
-                    "Failed to load image",
-                    style: TextStyle(color: Colors.red, fontSize: 16),
-                  ),
-                );
-              },
-            ),
+            child: image,
           ),
-        )
-            : const CircularProgressIndicator(),
+        ),
       ),
     );
   }
